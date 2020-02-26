@@ -1,0 +1,4 @@
+include ':l03_ffmpeg'
+include ':l02_mk_cmake'
+include ':L01_Jni'
+rootProject.name = "NDK_Pro"
