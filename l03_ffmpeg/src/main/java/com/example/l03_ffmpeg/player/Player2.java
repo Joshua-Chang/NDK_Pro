@@ -1,10 +1,10 @@
-package com.example.l03_ffmpeg;
+package com.example.l03_ffmpeg.player;
 
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public class Player implements SurfaceHolder.Callback {
+public class Player2 implements SurfaceHolder.Callback {
     static {
         System.loadLibrary("player");
     }
@@ -34,9 +34,9 @@ public class Player implements SurfaceHolder.Callback {
     }
 
     public void start(String path) {
-        native_start(path,surfaceHolder.getSurface());
+//        native_start(path,surfaceHolder.getSurface());
     }
-    public  native void native_start(String path, Surface surface);
-    public native void sound(String input,String output);
+//    public  native void native_start(String path, Surface surface);
+//    public native void sound(String input,String output);
 
 }

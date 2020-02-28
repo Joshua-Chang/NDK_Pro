@@ -63,7 +63,7 @@ void AudioChannel::encodeData(int8_t *data) {
     }
 }
 
-void AudioChannel::setAudioEncInfo(int samplesInHZ, int channels) {
+void AudioChannel::setAudioEncInfo(jint samplesInHZ, jint channels) {
     /**
      * todo 一、初始化faac编码器
      */

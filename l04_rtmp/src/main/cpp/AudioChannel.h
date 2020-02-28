@@ -7,13 +7,14 @@
 
 
 #include <faac.h>
+#include <jni.h>
 #include "librtmp/rtmp.h"
 
 class AudioChannel {
     typedef void (*AudioCallback)(RTMPPacket* packet);
 public:
     void encodeData(int8_t *data);
-    void setAudioEncInfo(int samplesInHZ, int channels);
+    void setAudioEncInfo(jint samplesInHZ, jint channels);
     void setAudioCallback(AudioCallback audioCallback);
     RTMPPacket *setAudioTag();
     int getInputSamples();

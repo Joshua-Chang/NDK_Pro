@@ -10,14 +10,18 @@ import android.os.Environment;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.TextView;
+import android.widget.SeekBar;
+
+import com.example.l03_ffmpeg.player.Player;
 
 import java.io.File;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
 //fasfa
     SurfaceView surfaceView;
     Player wangyiPlayer;
+    private SeekBar seekBar;
+    private int progress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,25 +35,54 @@ public class MainActivity extends AppCompatActivity {
         }
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager
                 .LayoutParams.FLAG_KEEP_SCREEN_ON);
+        seekBar=findViewById(R.id.seekBar);
+        seekBar.setOnSeekBarChangeListener(this);
+
         surfaceView = findViewById(R.id.surfaceView);
         wangyiPlayer = new Player();
         wangyiPlayer.setSurfaceView(surfaceView);
+        File file = new File(Environment.getExternalStorageDirectory(), "input.mp4");
+        wangyiPlayer.setDataSource(file.getAbsolutePath());
 
-        // Example of a call to a native method
+        wangyiPlayer.setOnPrepareListener(new Player.OnPrepareListener() {
+            @Override
+            public void onPrepare() {
+                wangyiPlayer.start();
+            }
+        });
     }
 
     /**
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
      */
-    public native String stringFromJNI();
     public void open(View view) {
-        File file = new File(Environment.getExternalStorageDirectory(), "input.mp4");
-        wangyiPlayer.start(file.getAbsolutePath());
+//        File file = new File(Environment.getExternalStorageDirectory(), "input.mp4");
+//        wangyiPlayer.start(file.getAbsolutePath());
     }
     public void play(View view) {
-        String input = new File(Environment.getExternalStorageDirectory(),"input.mp3").getAbsolutePath();
-        String output = new File(Environment.getExternalStorageDirectory(),"output.pcm").getAbsolutePath();
-        wangyiPlayer.sound(input, output);
+//        String input = new File(Environment.getExternalStorageDirectory(),"input.mp3").getAbsolutePath();
+//        String output = new File(Environment.getExternalStorageDirectory(),"output.pcm").getAbsolutePath();
+//        wangyiPlayer.sound(input, output);
+
+
+
+        wangyiPlayer.prepare();
+
+    }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+
     }
 }

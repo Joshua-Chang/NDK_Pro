@@ -59,7 +59,7 @@ void *start(void *args) {
     RTMP_EnableWrite(rtmp);
     ret = RTMP_Connect1(rtmp, 0);//内部是socket长连接
     if (!ret) {
-        LOGE("连接服务器:%s", url);
+        LOGE("连接服务器:%s,%d", url,ret);
         return NULL;
     }
     ret = RTMP_ConnectStream(rtmp, 0);
@@ -155,7 +155,7 @@ JNIEXPORT void JNICALL
 Java_com_example_l04_1rtmp_LivePusher_native_1init(JNIEnv *env, jobject thiz) {
     videoChannel = new VideoChannel;
     videoChannel->setVideoCallback(callback);
-//    audioChannel = new AudioChannel;
+    audioChannel = new AudioChannel;
     audioChannel->setAudioCallback(callback);
 }extern "C"
 JNIEXPORT void JNICALL
@@ -189,7 +189,7 @@ Java_com_example_l04_1rtmp_LivePusher_native_1setAudioEncInfo(JNIEnv *env, jobje
 }extern "C"
 JNIEXPORT jint JNICALL
 Java_com_example_l04_1rtmp_LivePusher_getInputSamples(JNIEnv *env, jobject thiz) {
-    if (!audioChannel) {
+    if (audioChannel) {
         return audioChannel->getInputSamples();
     }
     return -1;
