@@ -9,20 +9,32 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
-AudioChannel::AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *avCodecContext)
-        : BaseChannel(id, javaCallHelper, avCodecContext) {
-
+AudioChannel::AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *avCodecContext,
+                           AVRational time_base)
+        : BaseChannel(id, javaCallHelper, avCodecContext,time_base) {
+    out_channels=av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
+    out_samplesize=av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+    out_sample_rate=44100;
+    //out_sample_rate*out_samplesize 16位 2个字节 out_channels 2
+    out_buffer= (uint8_t*)malloc(out_sample_rate * out_samplesize * out_channels);
 }
 
 void bqPlayerCallBack(SLAndroidSimpleBufferQueueItf bq, void *context) {
     AudioChannel *audioChannel = static_cast<AudioChannel *>(context);
-
+    int datalen = audioChannel->getPcm();
+    if (datalen>0){
+        (*bq)->Enqueue(bq,audioChannel->out_buffer,datalen);
+    }
 
 }
 
 void *audioPlay(void *args) {
     AudioChannel *audio = static_cast<AudioChannel *>(args);
     audio->initOpenSL();
+
+    /**
+     * todo 线程方法一定要    return 0;
+     */
     return 0;
 }
 
@@ -33,9 +45,9 @@ void *audioDecode(void *args) {
 }
 
 void AudioChannel::play() {
-    swr_ctx=swr_alloc_set_opts(0, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, out_sample_rate,
-                       avCodecContext->channel_layout, avCodecContext->sample_fmt,
-                       avCodecContext->sample_rate, 0, 0);
+    swr_ctx = swr_alloc_set_opts(0, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, out_sample_rate,
+                                 avCodecContext->channel_layout, avCodecContext->sample_fmt,
+                                 avCodecContext->sample_rate, 0, 0);
     swr_init(swr_ctx);
 
     pkt_queue.setWork(1);
@@ -158,5 +170,33 @@ void AudioChannel::decode() {
 }
 
 int AudioChannel::getPcm() {
-    return 0;
+    AVFrame *frame = 0;
+    int data_size=0;
+    while (isPlaying) {
+        int ret = frame_queue.get(frame);
+//        转换
+        if (!isPlaying) {
+            break;
+        }
+        if (!ret) {
+            continue;
+        }
+        /**
+* todo 6.2 转换、对齐、输出
+*/
+        uint64_t dst_nb_samples = av_rescale_rnd(
+                swr_get_delay(swr_ctx, frame->sample_rate) + frame->nb_samples, out_sample_rate,
+                frame->sample_rate, AV_ROUND_UP);
+
+        int nb = swr_convert(swr_ctx,
+                             &out_buffer, dst_nb_samples,//转换后存放的out_buffer
+                             (const uint8_t **) frame->data, frame->nb_samples
+        );
+//        转换后的out——buffer大小
+        data_size=nb*out_channels*out_samplesize;
+        clock = frame->pts * av_q2d(time_base);//pts 数量*单位
+        break;
+    }
+    releaseAvFrame(frame);
+    return data_size;
 }

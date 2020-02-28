@@ -15,7 +15,8 @@ extern "C"{
 class AudioChannel :public BaseChannel{
 
 public:
-    AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *avCodecContext);
+    AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *avCodecContext,
+                 AVRational rational);
 
     virtual void play();
 
@@ -25,6 +26,7 @@ public:
 
     void decode();
     int getPcm();
+    uint8_t *out_buffer;
 
 private:
     pthread_t pid_audio_play;

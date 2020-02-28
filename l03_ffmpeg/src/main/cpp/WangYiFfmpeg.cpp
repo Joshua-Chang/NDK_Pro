@@ -62,6 +62,7 @@ void WangYiFfmpeg::prepareFFmpeg() {
         //编码参数--》编码类型
         AVCodecParameters *codecpar = formatContext->streams[i]->codecpar;
         AVCodec *dec = avcodec_find_decoder(codecpar->codec_id);//编码器
+        AVStream *stream = formatContext->streams[i];
         if (!dec) {
             if (javaCallHelper) {
                 javaCallHelper->onError(THREAD_CHILD, FFMPEG_FIND_DECODER_FAIL);
@@ -91,11 +92,21 @@ void WangYiFfmpeg::prepareFFmpeg() {
         }
 
         if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-            audioChannel=new AudioChannel(i,javaCallHelper,codecContext);
+            audioChannel= new AudioChannel(i, javaCallHelper, codecContext, stream->time_base);
 
         } else if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-            videoChannel=new VideoChannel(i,javaCallHelper,codecContext);
+            /**
+             * num分子 den分母
+             * 视频同步音频：
+             * 方案一：根据帧率 失败；因为解码时间和渲染时间不好确定  I B B P  解码IPBB 渲染 IBBP
+             */
+            AVRational frameRate = stream->avg_frame_rate;
+//            int fps = frameRate.num / frameRate.den;
+            double fps = av_q2d(frameRate);//另一种写法
+            
+            videoChannel= new VideoChannel(i, javaCallHelper, codecContext, stream->time_base);
             videoChannel->setRenderFrame(renderFrame);
+            videoChannel->setFps(fps);
         }
     }
     if (!audioChannel&&!videoChannel){
@@ -104,6 +115,7 @@ void WangYiFfmpeg::prepareFFmpeg() {
         }
         return;
     }
+    videoChannel->audioChannel=audioChannel;
     if (javaCallHelper){
         javaCallHelper->onPrepare(THREAD_CHILD);
     }
@@ -119,7 +131,7 @@ void *startThread(void *args){
 
 void WangYiFfmpeg::start() {
     isPlaying= true;
-//    if (audioChannel){audioChannel->play();}
+    if (audioChannel){audioChannel->play();}
     if (videoChannel){videoChannel->play();}
     pthread_create(&pid_play,NULL,startThread,this);
 }
